@@ -126,9 +126,16 @@ class LeaderboardApp:
         for widget in self.entries_frame.winfo_children():
             widget.destroy()
 
-        # Update global stats but don't add them to the leaderboard view
-        self.players_points_info_Y3["TotalGlobalPoints"] = sum(self.players_points_info_Y3.values())
-        self.players_points_info_Y3["NumberOfPlayers"] = len(self.players_points_info_Y3)
+        # Calculate total points and number of players
+        players_without_stats = {name: score for name, score in self.players_points_info_Y3.items()
+                                 if name not in ["TotalGlobalPoints", "NumberOfPlayers"]}
+
+        total_points = sum(players_without_stats.values())
+        num_players = len(players_without_stats)
+
+        # Update global stats
+        self.players_points_info_Y3["TotalGlobalPoints"] = total_points
+        self.players_points_info_Y3["NumberOfPlayers"] = num_players
 
         # Create header with column configuration
         header_frame = tk.Frame(self.entries_frame, bg="lightgray")
@@ -146,10 +153,6 @@ class LeaderboardApp:
                  bg="lightgray", width=25, anchor='center').grid(row=0, column=1, sticky='nsew')
         tk.Label(header_frame, text="Score", font=("Arial", 12, "bold"),
                  bg="lightgray", width=10, anchor='center').grid(row=0, column=2, sticky='nsew')
-
-        # Filter out 'TotalGlobalPoints' and 'NumberOfPlayers' from the leaderboard
-        players_without_stats = {name: score for name, score in self.players_points_info_Y3.items()
-                                 if name not in ["TotalGlobalPoints", "NumberOfPlayers"]}
 
         # Create entries with aligned columns
         sorted_players = sorted(players_without_stats.items(), key=lambda x: x[1], reverse=True)
@@ -196,16 +199,8 @@ class LeaderboardApp:
 
             base_points = num_players * 3
             position_bonus = num_players / (position * 2)
-            relative_position = average_points / current_points / 25 + 1
-
-            if relative_position > 1.2: # Makes sure the multiplier isn't too large
-                relative_position = 1.2
-
-            if relative_position < 0.8: # Makes sure the multiplier isn't too small
-                relative_position = 0.8
 
             awarded_points = math.floor(base_points * position_bonus)
-            awarded_points += math.floor(relative_position * awarded_points * relative_position)
 
             # Update points
             if player_name not in self.players_points_info_Y3:
